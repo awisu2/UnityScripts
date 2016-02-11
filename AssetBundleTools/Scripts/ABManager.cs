@@ -96,13 +96,22 @@ namespace AssetBundleTools {
 		}
 
 		// AssetBundleのロード開始(２重ダウンロード)
-		public static void StartLoadAssetBundle(string name, LoadType type = LoadType.GAMEOBJECT)
+		public static bool StartLoadAssetBundle(string name, LoadType type = LoadType.GAMEOBJECT)
 		{
-			if (type == LoadType.GAMEOBJECT) {
-				// TODO:エラーリターンをうまく扱いたい
-				if (_manifest == null) {
-					return;
+			#if DEBUG
+			DebugLog("StartLoadAssetBundle : " + name);
+			#endif
+			if (type == LoadType.MANIFEST) {
+				// すでにダウンロードしている
+				if (_manifest != null) {
+					// TODO:エラーリターンをうまく扱いたい(マニフェストがないのでエラー)
+					return false;
 				}
+			}
+
+			// ダウンロード中またはすでにダウンロード済みチェック
+			if (wwws.ContainsKey (name) || bundles.ContainsKey (name)) {
+				return true;
 			}
 
 			string url = GetUrl(name);
@@ -121,6 +130,8 @@ namespace AssetBundleTools {
 			if (type != LoadType.MANIFEST) {
 				StartLoadDependence (name);
 			}
+
+			return true;
 		}
 
 		// マニフェストのダウンロード
@@ -130,20 +141,26 @@ namespace AssetBundleTools {
 
 		// 依存アセットバンドルダウンロード
 		public static void StartLoadDependence(string name) {
+			if (_manifest == null) {
+				return;
+			}
 			string[] dependencies = _manifest.GetAllDependencies(name);
 			for (int i = 0; i < dependencies.Length; i++) {
-				#if DEBUG
-				DebugLog ("[Load Dependence] " + dependencies [i]);
-				#endif
-				StartLoadAssetBundle (name, LoadType.DEPENDENCE);
+				StartLoadAssetBundle (dependencies [i], LoadType.DEPENDENCE);
 			}
 		}
 
 		// ダウンロードの状態を監視
 		private static void CheckDownloads() {
+			List<string> deleteKeys = new List<string> ();
+
 			foreach (var keyValue in wwws) {
 				string name = keyValue.Key;
 				WWW www = wwws [name];
+
+				#if DEBUG
+				DebugLog ("[CheckDownload] " + name);
+				#endif
 
 				// ダウンロード終了チェック
 				if (!www.isDone) {
@@ -152,32 +169,45 @@ namespace AssetBundleTools {
 
 				// エラーチェック
 				if(!string.IsNullOrEmpty(www.error)) {
-					errors.Add (name, www.error);
-					RemoveWWW (name);
 					#if DEBUG
 					DebugLog ("[download error] " + name + " " + www.error);
 					#endif
+					errors.Add (name, www.error);
+					deleteKeys.Add (name);
+					continue;
 				}
 
 				// AssetBundleの取得とリストへの追加
 				AssetBundle bundle = www.assetBundle;
 				if (bundle == null) {
+					#if DEBUG
+					DebugLog ("[download error] " + name + " " + "no assetBundle");
+					#endif
 					errors.Add (name, "no assetBundle");
+					deleteKeys.Add (name);
+					continue;
 				}
 
-				// バンドルに追加
-				// TODO: マニフェストは不要かも
-				bundles.Add (name, bundle);
-
 				// タイプで処理分け
+				#if DEBUG
+				DebugLog ("[downloaded] " + name);
+				#endif
 				if (wwwInfos [name].loadtype == LoadType.MANIFEST) {
 					// AssetBundleの中から各種objectを読み込む
 					_manifest = bundle.LoadAsset ("AssetBundleManifest",
 						typeof(AssetBundleManifest)) as AssetBundleManifest;
+				} else {
+					// バンドルに追加
+					bundles.Add (name, bundle);
 				}
 
 				// ダウンロード管理のクリア
-				RemoveWWW(name);
+				deleteKeys.Add(name);
+			}
+
+			// 削除
+			foreach (string key in deleteKeys) {
+				RemoveWWW (key);
 			}
 		}
 
@@ -204,8 +234,11 @@ namespace AssetBundleTools {
 		// ダウンロード完了チェック
 		// TODO:エラーの扱いは別
 		public static bool isDownloaded(string name = "", LoadType type = LoadType.GAMEOBJECT) {
+			#if DEBUG
+			DebugLog ("[isDownloaded] " + name);
+			#endif
 			// ダウンロード中
-			if (wwws.ContainsKey) {
+			if (wwws.ContainsKey(name)) {
 				return false;
 			}
 
@@ -213,118 +246,77 @@ namespace AssetBundleTools {
 				if (_manifest == null)
 					return false;
 			} else {
-				if (!bundles.ContainsKey (name) && errors.ContainsKey (name)) {
+				if (!bundles.ContainsKey (name) && !errors.ContainsKey (name)) {
+					if (errors.ContainsKey(name)) {
+						Debug.Log ("bundle error " + errors[name]);
+					}
 					return false;
+				}
+
+				// 依存関係のファイルが全てロードされているかチェック
+				if (_manifest != null) {
+					string[] dependencies = _manifest.GetAllDependencies(name);
+					for (int i = 0; i < dependencies.Length; i++) {
+						if (!isDownloaded (dependencies [i])) {
+							return false;
+						}
+					}
 				}
 			}
 
+			#if DEBUG
+			DebugLog ("[isDownloaded] " + name + " check OK");
+			#endif
 			return true;
 		}
-//
-//		// アセットバンドルのダウンロードと読み込み
-//		public IEnumerator AssetBundleLoad (string assetBundleName, string assetName, int version = 1, bool isdpend = false) {
-//			string url = GetUrl(assetBundleName);
-//
-//			// ダウンロードを開始して終了を待つ
-//			WWW www = WWW.LoadFromCacheOrDownload (url, version);
-//			wwws.Add (assetBundleName, www);
-//			while (!www.isDone) {
-//				DebugLog ("[downloading] " + assetBundleName + " " + (www.progress * 100f).ToString () + "%");
-//				yield return null;
-//			}
-//
-//			// エラーチェック
-//			if(!string.IsNullOrEmpty(www.error)) {
-//				errors.Add (assetBundleName, www.error);
-//				DebugLog ("[download error] " + assetBundleName + " " + www.error);
-//				yield break;
-//			}
-//
-//			// AssetBundleの抽出
-//			AssetBundle bundle = wwws [assetBundleName].assetBundle;
-//			if (bundle == null) {
-//				errors.Add (assetBundleName, wwws[assetBundleName].error);
-//				yield break;
-//			}
-//			bundles.Add (assetBundleName, bundle);
-//
-//			// ダウンロード処理のクリア
-//			wwws [assetBundleName].Dispose();
-//			wwws.Remove (assetBundleName);
-//
-//		// TODO:依存関係のダウンロードの場合はここで終わり
-//			if (isdpend) {
-//				AssetBundleLoadDependencies (assetBundleName);
-//				yield break;
-//			}
-//
-//			// AssetBundleの中から各種objectを読み込む(非同期)
-//			AssetBundleRequest request = bundle.LoadAssetAsync (assetName, typeof(GameObject));
-//			yield return request;
-//
-//			GameObject obj = request.asset as GameObject;
-//
-//			// 不要になったバンドルのクリア
-//			bundle.Unload(false);
-//
-//			// 依存アッセトのロード
-//			AssetBundleLoadDependencies (assetBundleName);
-//
-//			// インスタンス化
-//			GameObject.Instantiate (obj);
-//		}
-//
-//		// アセットバンドルのダウンロードと読み込み
-//		public static IEnumerator ManifestLoad (string manifestName) {
-//			string url = GetUrl(manifestName);
-//
-//			// ダウンロードを開始して終了を待つ
-//			WWW www = new WWW(url);
-//			wwws.Add (manifestName, www);
-//			while (!www.isDone) {
-//				DebugLog ("[downloading] " + manifestName + " " + (www.progress * 100f).ToString () + "%");
-//				yield return null;
-//			}
-//
-//			// エラーチェック
-//			if(!string.IsNullOrEmpty(www.error)) {
-//				errors.Add (manifestName, www.error);
-//				DebugLog ("[download error] " + manifestName + " " + www.error);
-//				yield break;
-//			}
-//
-//			// AssetBundleの抽出
-//			AssetBundle bundle = wwws [manifestName].assetBundle;
-//			if (bundle == null) {
-//				errors.Add (manifestName, wwws[manifestName].error);
-//				yield break;
-//			}
-//
-//			// ダウンロード処理のクリア
-//			wwws [manifestName].Dispose();
-//			wwws.Remove (manifestName);
-//
-//			// AssetBundleの中から各種objectを読み込む(非同期)
-//			AssetBundleRequest request = bundle.LoadAssetAsync ("AssetBundleManifest", typeof(AssetBundleManifest));
-//			yield return request;
-//
-//			_manifest = request.asset as AssetBundleManifest;
-//		}
-//
-//		// 依存アセットバンドルダウンロード
-//		public void AssetBundleLoadDependencies(string bundlename) {
-//			string[] dependencies = _manifest.GetAllDependencies(bundlename);
-//			for (int i = 0; i < dependencies.Length; i++) {
-//				Debug.Log (dependencies [i]);
-//				StartCoroutine(AssetBundleLoad (dependencies [i], "", 1, true));
-//			}
-//		}
 
-		#if DEBUG
-		private static void DebugLog(string log) {
-			Debug.Log (log);
+		// ダウンロードしたAssetbundleからAssetの取得
+		// TODO: yieldで普通にロードを待ったりしているので、一旦考慮の必要あり
+		// TODO: いきなりGameObjectでロードしているので、違う使い方もある
+		public static IEnumerator LoadAssets(string bundleName, string assetName) {
+			ABManager.StartLoadAssetBundle (bundleName);
+
+			while (!ABManager.isDownloaded (bundleName)) {
+				yield return null;
+			}
+
+			if (!bundles.ContainsKey (bundleName))
+				yield break;
+
+			AssetBundle bundle = bundles [bundleName];
+
+			// AssetBundleの中から各種objectを読み込む(非同期)
+			AssetBundleRequest request = bundle.LoadAssetAsync (assetName, typeof(GameObject));
+			yield return request;
+
+			GameObject obj = request.asset as GameObject;
+
+			// 不要になったバンドルのクリア
+			bundle.Unload(false);
+
+			// インスタンス化
+			GameObject.Instantiate (obj);
 		}
-		#endif
+
+		// 不要になったアセットバンドルのクリア
+		public static void UnloadBundle(string name, bool isDependencies = true)
+		{
+			if(!bundles.ContainsKey(name)) {
+				return;
+			}
+
+			// 依存しているバンドルもクリア
+			if(isDependencies) {
+				string[] dependencies = _manifest.GetAllDependencies(name);
+				for (int i = 0; i < dependencies.Length; i++) {
+					UnloadBundle (name);
+				}
+			}
+
+			// クリア
+			bundles[name].Unload(false);
+			bundles.Clear (name);
+		}
 
 		// 現在稼働しているプラットフォームの取得
 		private static RuntimePlatform GetPlatformRunning()
@@ -337,5 +329,12 @@ namespace AssetBundleTools {
 			return Application.platform;
 			#endif
 		}
+
+		// デバッグログ
+		#if DEBUG
+		private static void DebugLog(string log) {
+		Debug.Log (log);
+		}
+		#endif
 	}
 }

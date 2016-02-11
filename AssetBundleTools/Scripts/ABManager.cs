@@ -291,8 +291,8 @@ namespace AssetBundleTools {
 
 			GameObject obj = request.asset as GameObject;
 
-			// 不要になったバンドルのクリア
-			bundle.Unload(false);
+			// 不要インスタンスの削除
+			UnloadBundle (bundleName);
 
 			// インスタンス化
 			GameObject.Instantiate (obj);
@@ -309,13 +309,13 @@ namespace AssetBundleTools {
 			if(isDependencies) {
 				string[] dependencies = _manifest.GetAllDependencies(name);
 				for (int i = 0; i < dependencies.Length; i++) {
-					UnloadBundle (name);
+					UnloadBundle (dependencies[i]);
 				}
 			}
 
 			// クリア
 			bundles[name].Unload(false);
-			bundles.Clear (name);
+			bundles.Remove (name);
 		}
 
 		// 現在稼働しているプラットフォームの取得

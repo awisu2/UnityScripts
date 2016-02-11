@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using UnityEditor;
 
-namespace Save {
+namespace SaveTools {
 	class Sample {
 		private int GetNewVersion() {
 			int version = PlayerPrefs.GetInt ("version", -1);

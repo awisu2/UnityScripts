@@ -2,10 +2,10 @@
 using System.Collections;
 using System.IO;
 
-namespace Download{
+namespace DownloadTools {
 	public class Sample {
 
-		private IEnumerator DownloadImage(string url) {
+		private IEnumerator Downloading(string url) {
 			WWW www = new WWW (url);
 
 			//		yield return www;

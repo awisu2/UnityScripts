@@ -307,9 +307,11 @@ namespace AssetBundleTools {
 
 			// 依存しているバンドルもクリア
 			if(isDependencies) {
-				string[] dependencies = _manifest.GetAllDependencies(name);
-				for (int i = 0; i < dependencies.Length; i++) {
-					UnloadBundle (dependencies[i]);
+				if (_manifest != null) {
+					string[] dependencies = _manifest.GetAllDependencies(name);
+					for (int i = 0; i < dependencies.Length; i++) {
+						UnloadBundle (dependencies[i]);
+					}
 				}
 			}
 

@@ -72,6 +72,9 @@ namespace AssetBundleTools {
 				errors = new Dictionary<string, string> ();
 				_host = host;
 				_platformName = Util.GetPlatformName (GetPlatformRunning());
+				#if DEBUG
+				DebugLog("[Initialize] host:" + _host);
+				#endif
 			}
 		}
 
@@ -109,9 +112,6 @@ namespace AssetBundleTools {
 		// AssetBundleのロード開始(２重ダウンロード)
 		public static bool StartLoadAssetBundle(string name, LoadType type = LoadType.GAMEOBJECT)
 		{
-			#if DEBUG
-			DebugLog("StartLoadAssetBundle : " + name);
-			#endif
 			if (type == LoadType.MANIFEST) {
 				// 既にダウンロードしている
 				if (_manifest != null) {
@@ -133,7 +133,16 @@ namespace AssetBundleTools {
 			if (type == LoadType.MANIFEST) {
 				www = new WWW (url);
 			} else {
-				www = WWW.LoadFromCacheOrDownload (url, 1);
+				if (_manifest == null) {
+					www = WWW.LoadFromCacheOrDownload (url, 10);
+				} else {
+					Hash128 hash = _manifest.GetAssetBundleHash (name);
+					uint crc = 0; // 個別のmanifestに設定されている
+					#if DEBUG
+					DebugLog("[StartLoadAssetBundle] : " + name + ", " + hash + ", " + crc.ToString());
+					#endif
+					www = WWW.LoadFromCacheOrDownload (url, hash, crc);
+				}
 			}
 			wwws.Add (name, www);
 			wwwInfos.Add (name, new WWWInfo (type));
@@ -280,9 +289,6 @@ namespace AssetBundleTools {
 				}
 			}
 
-			#if DEBUG
-			DebugLog ("[isDownloaded] " + name + " check OK");
-			#endif
 			return true;
 		}
 

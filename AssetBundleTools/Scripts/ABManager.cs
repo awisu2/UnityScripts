@@ -33,7 +33,7 @@ namespace AssetBundleTools {
 		static AssetBundleManifest _manifest = null;
 
 		static string _host = "";
-		static string platformName = "";
+		static string _platformName = "";
 
 		static ABManager _manager = null;
 
@@ -46,9 +46,20 @@ namespace AssetBundleTools {
 		public static AssetBundleManifest manifest {
 			set{ _manifest = value; }
 		}
-
 		public static ABManager GetInstance{
 			get{ return _manager; }
+		}
+
+		public static string platformName{
+			get{ return _platformName; }
+		}
+
+		// エラーの取得
+		public static string GetErrorByName(string name) {
+			if (errors.ContainsKey (name)) {
+				return errors[name];
+			}
+			return "";
 		}
 
 		// 初期化
@@ -60,7 +71,7 @@ namespace AssetBundleTools {
 				bundles = new Dictionary<string, AssetBundle> ();
 				errors = new Dictionary<string, string> ();
 				_host = host;
-				platformName = Util.GetPlatformName (GetPlatformRunning());
+				_platformName = Util.GetPlatformName (GetPlatformRunning());
 			}
 		}
 
@@ -92,7 +103,7 @@ namespace AssetBundleTools {
 
 		// 補完されたurlの取得
 		private static string GetUrl(string fileName) {
-			return _host + "/" + platformName + "/" + fileName;
+			return _host + "/" + _platformName + "/" + fileName;
 		}
 
 		// AssetBundleのロード開始(２重ダウンロード)
@@ -102,14 +113,15 @@ namespace AssetBundleTools {
 			DebugLog("StartLoadAssetBundle : " + name);
 			#endif
 			if (type == LoadType.MANIFEST) {
-				// すでにダウンロードしている
+				// 既にダウンロードしている
 				if (_manifest != null) {
-					// TODO:エラーリターンをうまく扱いたい(マニフェストがないのでエラー)
+					errors.Add (name, "already manifest file " + _platformName);
 					return false;
 				}
 			}
 
 			// ダウンロード中またはすでにダウンロード済みチェック
+			// TODO:カウントアップ？
 			if (wwws.ContainsKey (name) || bundles.ContainsKey (name)) {
 				return true;
 			}
@@ -135,12 +147,16 @@ namespace AssetBundleTools {
 		}
 
 		// マニフェストのダウンロード
-		public static void StartLoadManifest() {
-			StartLoadAssetBundle (platformName, LoadType.MANIFEST);
+		public static IEnumerator StartLoadManifest() {
+			StartLoadAssetBundle (_platformName, LoadType.MANIFEST);
+			string error = "";
+			while (isDownloaded (_platformName, out error) == false) {
+				yield return null;
+			}
 		}
 
 		// 依存アセットバンドルダウンロード
-		public static void StartLoadDependence(string name) {
+		private static void StartLoadDependence(string name) {
 			if (_manifest == null) {
 				return;
 			}
@@ -158,17 +174,13 @@ namespace AssetBundleTools {
 				string name = keyValue.Key;
 				WWW www = wwws [name];
 
-				#if DEBUG
-				DebugLog ("[CheckDownload] " + name);
-				#endif
-
 				// ダウンロード終了チェック
 				if (!www.isDone) {
 					continue;
 				}
 
 				// エラーチェック
-				if(!string.IsNullOrEmpty(www.error)) {
+				if(string.IsNullOrEmpty(www.error) == false) {
 					#if DEBUG
 					DebugLog ("[download error] " + name + " " + www.error);
 					#endif
@@ -232,11 +244,14 @@ namespace AssetBundleTools {
 		}
 
 		// ダウンロード完了チェック
-		// TODO:エラーの扱いは別
-		public static bool isDownloaded(string name = "", LoadType type = LoadType.GAMEOBJECT) {
+		//
+		// ダウンロードが完了していればtrueを返却
+		// エラーチェックは別途行なうこと
+		public static bool isDownloaded(string name, out string error, LoadType type = LoadType.GAMEOBJECT) {
 			#if DEBUG
 			DebugLog ("[isDownloaded] " + name);
 			#endif
+			error = "";
 			// ダウンロード中
 			if (wwws.ContainsKey(name)) {
 				return false;
@@ -246,21 +261,25 @@ namespace AssetBundleTools {
 				if (_manifest == null)
 					return false;
 			} else {
-				if (!bundles.ContainsKey (name) && !errors.ContainsKey (name)) {
-					if (errors.ContainsKey(name)) {
-						Debug.Log ("bundle error " + errors[name]);
-					}
-					return false;
+				// ダウンロードは終わっているがエラー
+				if(errors.ContainsKey (name)) {
+					error = errors[name];
+					return true;
 				}
 
 				// 依存関係のファイルが全てロードされているかチェック
 				if (_manifest != null) {
 					string[] dependencies = _manifest.GetAllDependencies(name);
 					for (int i = 0; i < dependencies.Length; i++) {
-						if (!isDownloaded (dependencies [i])) {
+						if (isDownloaded (dependencies [i], out error) == false) {
 							return false;
 						}
 					}
+				}
+
+				// 既にダウンロードされているかチェック(依存チェックの後)
+				if (bundles.ContainsKey (name)) {
+					return true;
 				}
 			}
 
@@ -276,12 +295,15 @@ namespace AssetBundleTools {
 		public static IEnumerator LoadAssets(string bundleName, string assetName) {
 			ABManager.StartLoadAssetBundle (bundleName);
 
-			while (!ABManager.isDownloaded (bundleName)) {
+			string error = null;
+			while (!isDownloaded (bundleName, out error)) {
 				yield return null;
 			}
-
-			if (!bundles.ContainsKey (bundleName))
+			// エラーチェック
+			if (string.IsNullOrEmpty (error) == false) {
+				Debug.LogError ("[LoadError] " + bundleName + " : " + errors [bundleName]);
 				yield break;
+			}
 
 			AssetBundle bundle = bundles [bundleName];
 

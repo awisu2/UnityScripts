@@ -150,7 +150,7 @@ namespace AssetBundleTools {
 		public static IEnumerator StartLoadManifest() {
 			StartLoadAssetBundle (_platformName, LoadType.MANIFEST);
 			string error = "";
-			while (isDownloaded (_platformName, out error) == false) {
+			while (isDownloaded (_platformName, out error, LoadType.MANIFEST) == false) {
 				yield return null;
 			}
 		}
@@ -166,7 +166,7 @@ namespace AssetBundleTools {
 			}
 		}
 
-		// ダウンロードの状態を監視
+		// ダウンロードの状態を監視終わっていればAssetBundleを取得して、
 		private static void CheckDownloads() {
 			List<string> deleteKeys = new List<string> ();
 
@@ -248,10 +248,8 @@ namespace AssetBundleTools {
 		// ダウンロードが完了していればtrueを返却
 		// エラーチェックは別途行なうこと
 		public static bool isDownloaded(string name, out string error, LoadType type = LoadType.GAMEOBJECT) {
-			#if DEBUG
-			DebugLog ("[isDownloaded] " + name);
-			#endif
 			error = "";
+
 			// ダウンロード中
 			if (wwws.ContainsKey(name)) {
 				return false;
@@ -266,6 +264,10 @@ namespace AssetBundleTools {
 					error = errors[name];
 					return true;
 				}
+				// ダウンロードされていなければfalse
+				if (bundles.ContainsKey (name) == false) {
+					return false;
+				}
 
 				// 依存関係のファイルが全てロードされているかチェック
 				if (_manifest != null) {
@@ -275,11 +277,6 @@ namespace AssetBundleTools {
 							return false;
 						}
 					}
-				}
-
-				// 既にダウンロードされているかチェック(依存チェックの後)
-				if (bundles.ContainsKey (name)) {
-					return true;
 				}
 			}
 
@@ -317,7 +314,12 @@ namespace AssetBundleTools {
 			UnloadBundle (bundleName);
 
 			// インスタンス化
-			GameObject.Instantiate (obj);
+			if (obj == null) {
+				Debug.Log ("[asset is null] " + bundleName + " -> " + assetName);
+			} else {
+				var ins = GameObject.Instantiate (obj);
+				ins.name = assetName;
+			}
 		}
 
 		// 不要になったアセットバンドルのクリア

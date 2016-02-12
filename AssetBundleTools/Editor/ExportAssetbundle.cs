@@ -42,7 +42,12 @@ namespace AssetBundleTools {
 			string name = GetPlatformNameByTarget (target);
 			string dir = Application.dataPath + "/../" + OutputFolder + "/" + name;
 
-			BuildAssetBundleOptions options = BuildAssetBundleOptions.None;
+			BuildAssetBundleOptions options = BuildAssetBundleOptions.None
+				| BuildAssetBundleOptions.DeterministicAssetBundle
+				| BuildAssetBundleOptions.DisableWriteTypeTree
+//				| BuildAssetBundleOptions.AppendHashToAssetBundleName	
+				| BuildAssetBundleOptions.ChunkBasedCompression
+				;
 
 			// ディレクトリ作成
 			if(!Directory.Exists(dir)) {
@@ -50,6 +55,9 @@ namespace AssetBundleTools {
 			}
 
 			BuildPipeline.BuildAssetBundles (dir, options, target);
+			Caching.CleanCache();
+
+			Debug.Log ("Export Complete. (" + dir + ")");
 		}
 
 		// platformからtargetを取得(targetを利用できるのはEditorのみなので変換できるように)

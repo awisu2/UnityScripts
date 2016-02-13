@@ -2,21 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 
+using UnityEngine.Experimental.Networking;
+using System.IO;
+using System;
+
 namespace AssetBundleTools {
 	// TODO: bundleInfoのほうがいいかも
-	public class WWWInfo {
-		protected ABManager.LoadType _loadtype;
-
-		public ABManager.LoadType loadtype {
-			get{ return _loadtype; }
-		}
-
-		public WWWInfo (ABManager.LoadType loadtype) {
-			_loadtype = loadtype;
-		}
-	}
-
-	public class ABManager : MonoBehaviour {
+	abstract public class ABLoader : IDisposable {
 		// ロードタイプ
 		public enum LoadType
 		{
@@ -25,8 +17,122 @@ namespace AssetBundleTools {
 			DEPENDENCE,
 		};
 
-		static Dictionary<string, WWW> wwws;
-		static Dictionary<string, WWWInfo> wwwInfos;
+		// パス
+		protected string _path;
+		// ファイル名
+		protected string _filename;
+		// ロードタイプ
+		protected LoadType _type;
+	
+		protected AssetBundle _bundle = null;
+		protected bool isUpdate = true;
+
+		// エラー
+		protected string _error = null;
+
+		// プロパティ
+		public LoadType loadType {
+			get{ return _type; }
+		}
+
+		// コンストラクタ
+		public ABLoader(string path, LoadType type) {
+			_path = path;
+			_filename = Path.GetFileName (path);
+			_type = type;
+		}
+
+		// 破棄
+		public void Dispose () {
+			#if DEBUG
+			Debug.Log("Dispose ABLoader");
+			#endif
+		}
+
+		// 都度チェック用メソッド、返却は、updateが更に必要かどうか
+		abstract public bool Update();
+		public AssetBundle GetAssetBundle() {
+			return _bundle;
+		}
+
+		// エラーの取得
+		public string error {
+			get{ return _error; }
+		}
+
+		// エラーチェック
+		public bool IsError() {
+			return string.IsNullOrEmpty (_error) == false;
+		}
+	}
+
+	public class ABLoaderWWW : ABLoader 
+	{
+		WWW _www = null;
+
+		// TODO:Disposeの使い方・・・？
+		// コンストラクタ
+		public ABLoaderWWW(string path, LoadType type) : base(path, type) {
+			InitRequest ();
+		}
+
+		// デストラクタ
+		~ABLoaderWWW() {
+			Dispose ();
+		}
+
+		// クリア
+		public void Dispose()
+		{
+			if (_www != null) {
+				_www.Dispose ();
+			}
+			base.Dispose ();
+		}
+
+		protected void InitRequest ()
+		{
+			string name = Path.GetFileName (_path);
+			string url = ABManager.GetUrl (_path);
+			if (_type == ABLoader.LoadType.MANIFEST) {
+				_www = new WWW (url);
+			} else {
+				if (ABManager.manifest == null) {
+					_www = WWW.LoadFromCacheOrDownload (url, 10);
+				} else {
+					Hash128 hash = ABManager.manifest.GetAssetBundleHash (name);
+					uint crc = 0; // 個別のmanifestに設定されている
+					_www = WWW.LoadFromCacheOrDownload (url, hash, crc);
+				}
+			}
+		}
+
+		// 更新
+		override public bool Update() {
+			if (isUpdate == false)
+				return false;
+
+			// 完了チェック
+			if (_www.isDone == false)
+				return true;
+			
+			// エラーチェック
+			if (string.IsNullOrEmpty (_www.error)) {
+				_bundle = _www.assetBundle;
+			} else {
+				_error = _www.error;
+			}
+
+			// 更新フラグ
+			isUpdate = false;
+
+			return true;
+		}
+	}
+
+	public class ABManager : MonoBehaviour {
+
+		static Dictionary<string, ABLoader> loaders;
 		static Dictionary<string, AssetBundle> bundles;
 		static Dictionary<string, string> errors;
 
@@ -45,6 +151,7 @@ namespace AssetBundleTools {
 		// マニフェスト
 		public static AssetBundleManifest manifest {
 			set{ _manifest = value; }
+			get{ return _manifest; }
 		}
 		public static ABManager GetInstance{
 			get{ return _manager; }
@@ -66,8 +173,7 @@ namespace AssetBundleTools {
 		public static void Initialize(string host, string gameObjectName = "ABManager")
 		{
 			if (InitializeABGameObject(gameObjectName)) {
-				wwws = new Dictionary<string, WWW> ();
-				wwwInfos = new Dictionary<string, WWWInfo> ();
+				loaders = new Dictionary<string, ABLoader> ();
 				bundles = new Dictionary<string, AssetBundle> ();
 				errors = new Dictionary<string, string> ();
 				_host = host;
@@ -84,7 +190,7 @@ namespace AssetBundleTools {
 
 		public void Update()
 		{
-			CheckDownloads ();
+			UpdateLoaders ();
 		}
 
 		// ダウンロードなどの管理のためのGameObject化
@@ -105,51 +211,33 @@ namespace AssetBundleTools {
 		}
 
 		// 補完されたurlの取得
-		private static string GetUrl(string fileName) {
+		public static string GetUrl(string fileName) {
 			return _host + "/" + _platformName + "/" + fileName;
 		}
 
 		// AssetBundleのロード開始(２重ダウンロード)
-		public static bool StartLoadAssetBundle(string name, LoadType type = LoadType.GAMEOBJECT)
+		public static bool StartLoadAssetBundle(string path, ABLoader.LoadType type = ABLoader.LoadType.GAMEOBJECT)
 		{
-			if (type == LoadType.MANIFEST) {
+			if (type == ABLoader.LoadType.MANIFEST) {
 				// 既にダウンロードしている
 				if (_manifest != null) {
-					errors.Add (name, "already manifest file " + _platformName);
+					errors.Add (path, "already manifest file " + _platformName);
 					return false;
 				}
 			}
 
 			// ダウンロード中またはすでにダウンロード済みチェック
 			// TODO:カウントアップ？
-			if (wwws.ContainsKey (name) || bundles.ContainsKey (name)) {
+			if (loaders.ContainsKey (path) || bundles.ContainsKey (path)) {
 				return true;
 			}
 
-			string url = GetUrl(name);
-
 			// ダウンロードを開始して終了を待つ
-			WWW www = null;
-			if (type == LoadType.MANIFEST) {
-				www = new WWW (url);
-			} else {
-				if (_manifest == null) {
-					www = WWW.LoadFromCacheOrDownload (url, 10);
-				} else {
-					Hash128 hash = _manifest.GetAssetBundleHash (name);
-					uint crc = 0; // 個別のmanifestに設定されている
-					#if DEBUG
-					DebugLog("[StartLoadAssetBundle] : " + name + ", " + hash + ", " + crc.ToString());
-					#endif
-					www = WWW.LoadFromCacheOrDownload (url, hash, crc);
-				}
-			}
-			wwws.Add (name, www);
-			wwwInfos.Add (name, new WWWInfo (type));
+			loaders.Add (path, new ABLoaderWWW (path, type));
 
 			// 依存関係のあるファイルもロード
-			if (type != LoadType.MANIFEST) {
-				StartLoadDependence (name);
+			if (type != ABLoader.LoadType.MANIFEST) {
+				StartLoadDependence (path);
 			}
 
 			return true;
@@ -157,9 +245,9 @@ namespace AssetBundleTools {
 
 		// マニフェストのダウンロード
 		public static IEnumerator StartLoadManifest() {
-			StartLoadAssetBundle (_platformName, LoadType.MANIFEST);
+			StartLoadAssetBundle (_platformName, ABLoader.LoadType.MANIFEST);
 			string error = "";
-			while (isDownloaded (_platformName, out error, LoadType.MANIFEST) == false) {
+			while (isDownloaded (_platformName, out error, ABLoader.LoadType.MANIFEST) == false) {
 				yield return null;
 			}
 		}
@@ -171,35 +259,35 @@ namespace AssetBundleTools {
 			}
 			string[] dependencies = _manifest.GetAllDependencies(name);
 			for (int i = 0; i < dependencies.Length; i++) {
-				StartLoadAssetBundle (dependencies [i], LoadType.DEPENDENCE);
+				StartLoadAssetBundle (dependencies [i], ABLoader.LoadType.DEPENDENCE);
 			}
 		}
 
 		// ダウンロードの状態を監視終わっていればAssetBundleを取得して、
-		private static void CheckDownloads() {
+		private static void UpdateLoaders() {
 			List<string> deleteKeys = new List<string> ();
 
-			foreach (var keyValue in wwws) {
+			foreach (var keyValue in loaders) {
 				string name = keyValue.Key;
-				WWW www = wwws [name];
+				ABLoader loader = keyValue.Value;
 
-				// ダウンロード終了チェック
-				if (!www.isDone) {
+				// 更新
+				if (loader.Update ()) {
 					continue;
 				}
 
 				// エラーチェック
-				if(string.IsNullOrEmpty(www.error) == false) {
+				if (loader.IsError()) {
+					errors.Add (name, loader.error);
 					#if DEBUG
-					DebugLog ("[download error] " + name + " " + www.error);
+					Debug.LogError(loader.error);
 					#endif
-					errors.Add (name, www.error);
 					deleteKeys.Add (name);
 					continue;
 				}
 
 				// AssetBundleの取得とリストへの追加
-				AssetBundle bundle = www.assetBundle;
+				AssetBundle bundle = loader.GetAssetBundle();
 				if (bundle == null) {
 					#if DEBUG
 					DebugLog ("[download error] " + name + " " + "no assetBundle");
@@ -213,7 +301,7 @@ namespace AssetBundleTools {
 				#if DEBUG
 				DebugLog ("[downloaded] " + name);
 				#endif
-				if (wwwInfos [name].loadtype == LoadType.MANIFEST) {
+				if (loaders [name].loadType == ABLoader.LoadType.MANIFEST) {
 					// AssetBundleの中から各種objectを読み込む
 					_manifest = bundle.LoadAsset ("AssetBundleManifest",
 						typeof(AssetBundleManifest)) as AssetBundleManifest;
@@ -222,49 +310,29 @@ namespace AssetBundleTools {
 					bundles.Add (name, bundle);
 				}
 
-				// ダウンロード管理のクリア
 				deleteKeys.Add(name);
 			}
 
 			// 削除
 			foreach (string key in deleteKeys) {
-				RemoveWWW (key);
+				loaders [key].Dispose ();
+				loaders.Remove (key);
 			}
-		}
-
-		// 削除
-		private static void RemoveWWW(string name) {
-			if (!wwws.ContainsKey (name)) {
-				return;
-			}
-			wwws [name].Dispose ();
-			wwws.Remove (name);
-
-			// infoも一緒に削除
-			wwwInfos.Remove (name);
-		}
-
-		// ダウンロード状況の取得
-		public static float GetProgress(string abName) {
-			if (wwws.ContainsKey (abName)) {
-				return wwws [abName].progress;
-			}
-			return -1f;
 		}
 
 		// ダウンロード完了チェック
 		//
 		// ダウンロードが完了していればtrueを返却
 		// エラーチェックは別途行なうこと
-		public static bool isDownloaded(string name, out string error, LoadType type = LoadType.GAMEOBJECT) {
+		public static bool isDownloaded(string name, out string error, ABLoader.LoadType type = ABLoader.LoadType.GAMEOBJECT) {
 			error = "";
 
 			// ダウンロード中
-			if (wwws.ContainsKey(name)) {
+			if (loaders.ContainsKey(name)) {
 				return false;
 			}
 
-			if (type == LoadType.MANIFEST) {
+			if (type == ABLoader.LoadType.MANIFEST) {
 				if (_manifest == null)
 					return false;
 			} else {

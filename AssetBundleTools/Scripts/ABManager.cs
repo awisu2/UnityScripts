@@ -2,136 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using UnityEngine.Experimental.Networking;
-using System.IO;
-using System;
-
 namespace AssetBundleTools {
-	// TODO: bundleInfoのほうがいいかも
-	abstract public class ABLoader : IDisposable {
-		// ロードタイプ
-		public enum LoadType
-		{
-			MANIFEST,
-			GAMEOBJECT,
-			DEPENDENCE,
-		};
-
-		// パス
-		protected string _path;
-		// ファイル名
-		protected string _filename;
-		// ロードタイプ
-		protected LoadType _type;
-	
-		protected AssetBundle _bundle = null;
-		protected bool isUpdate = true;
-
-		// エラー
-		protected string _error = null;
-
-		// プロパティ
-		public LoadType loadType {
-			get{ return _type; }
-		}
-
-		// コンストラクタ
-		public ABLoader(string path, LoadType type) {
-			_path = path;
-			_filename = Path.GetFileName (path);
-			_type = type;
-		}
-
-		// 破棄
-		public void Dispose () {
-			#if DEBUG
-			Debug.Log("Dispose ABLoader");
-			#endif
-		}
-
-		// 都度チェック用メソッド、返却は、updateが更に必要かどうか
-		abstract public bool Update();
-		public AssetBundle GetAssetBundle() {
-			return _bundle;
-		}
-
-		// エラーの取得
-		public string error {
-			get{ return _error; }
-		}
-
-		// エラーチェック
-		public bool IsError() {
-			return string.IsNullOrEmpty (_error) == false;
-		}
-	}
-
-	public class ABLoaderWWW : ABLoader 
-	{
-		WWW _www = null;
-
-		// TODO:Disposeの使い方・・・？
-		// コンストラクタ
-		public ABLoaderWWW(string path, LoadType type) : base(path, type) {
-			InitRequest ();
-		}
-
-		// デストラクタ
-		~ABLoaderWWW() {
-			Dispose ();
-		}
-
-		// クリア
-		public void Dispose()
-		{
-			if (_www != null) {
-				_www.Dispose ();
-			}
-			base.Dispose ();
-		}
-
-		protected void InitRequest ()
-		{
-			string name = Path.GetFileName (_path);
-			string url = ABManager.GetUrl (_path);
-			if (_type == ABLoader.LoadType.MANIFEST) {
-				_www = new WWW (url);
-			} else {
-				if (ABManager.manifest == null) {
-					_www = WWW.LoadFromCacheOrDownload (url, 10);
-				} else {
-					Hash128 hash = ABManager.manifest.GetAssetBundleHash (name);
-					uint crc = 0; // 個別のmanifestに設定されている
-					_www = WWW.LoadFromCacheOrDownload (url, hash, crc);
-				}
-			}
-		}
-
-		// 更新
-		override public bool Update() {
-			if (isUpdate == false)
-				return false;
-
-			// 完了チェック
-			if (_www.isDone == false)
-				return true;
-			
-			// エラーチェック
-			if (string.IsNullOrEmpty (_www.error)) {
-				_bundle = _www.assetBundle;
-			} else {
-				_error = _www.error;
-			}
-
-			// 更新フラグ
-			isUpdate = false;
-
-			return true;
-		}
-	}
-
 	public class ABManager : MonoBehaviour {
-
 		static Dictionary<string, ABLoader> loaders;
 		static Dictionary<string, AssetBundle> bundles;
 		static Dictionary<string, string> errors;
@@ -233,7 +105,8 @@ namespace AssetBundleTools {
 			}
 
 			// ダウンロードを開始して終了を待つ
-			loaders.Add (path, new ABLoaderWWW (path, type));
+//			loaders.Add (path, new ABLoaderWWW (path, type));
+			loaders.Add (path, new ABLoaderWebRequest (path, type));
 
 			// 依存関係のあるファイルもロード
 			if (type != ABLoader.LoadType.MANIFEST) {

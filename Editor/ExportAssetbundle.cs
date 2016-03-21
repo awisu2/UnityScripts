@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
-using AssetBundleTools;
 
-namespace AssetBundleTools {
+namespace A2Unity.Editor {
 	public class ExportAssetbundle  
 	{
 		const string OutputFolder = "AssetBundles";
@@ -89,9 +88,7 @@ namespace AssetBundleTools {
 		private static string GetPlatformNameByTarget(BuildTarget target)
 		{
 			RuntimePlatform platform = GetPlatformByTarget (target);
-			return Util.GetPlatformName (platform);
+			return A2Unity.Utility.AssetBundle.Util.GetPlatformName (platform);
 		}
-
-
 	}
 }

@@ -2,10 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace AssetBundleTools {
+namespace A2Unity.Utility.AssetBundle {
 	public class ABManager : MonoBehaviour {
 		static Dictionary<string, ABLoader> loaders;
-		static Dictionary<string, AssetBundle> bundles;
+		static Dictionary<string, UnityEngine.AssetBundle> bundles;
 		static Dictionary<string, string> errors;
 
 		static AssetBundleManifest _manifest = null;
@@ -46,7 +46,7 @@ namespace AssetBundleTools {
 		{
 			if (InitializeABGameObject(gameObjectName)) {
 				loaders = new Dictionary<string, ABLoader> ();
-				bundles = new Dictionary<string, AssetBundle> ();
+				bundles = new Dictionary<string, UnityEngine.AssetBundle> ();
 				errors = new Dictionary<string, string> ();
 				_host = host;
 				_platformName = Util.GetPlatformName (GetPlatformRunning());
@@ -160,7 +160,7 @@ namespace AssetBundleTools {
 				}
 
 				// AssetBundleの取得とリストへの追加
-				AssetBundle bundle = loader.GetAssetBundle();
+				UnityEngine.AssetBundle bundle = loader.GetAssetBundle();
 				if (bundle == null) {
 					#if DEBUG
 					DebugLog ("[download error] " + name + " " + "no assetBundle");
@@ -249,7 +249,7 @@ namespace AssetBundleTools {
 				yield break;
 			}
 
-			AssetBundle bundle = bundles [bundleName];
+			UnityEngine.AssetBundle bundle = bundles [bundleName];
 
 			// AssetBundleの中から各種objectを読み込む(非同期)
 			AssetBundleRequest request = bundle.LoadAssetAsync (assetName, typeof(GameObject));

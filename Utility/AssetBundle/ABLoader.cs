@@ -5,8 +5,7 @@ using System.IO;
 using System;
 
 //TODO:デストラクタとdispose
-
-namespace AssetBundleTools {
+namespace A2Unity.Utility.AssetBundle {
 	// TODO: bundleInfoのほうがいいかも
 	abstract public class ABLoader : IDisposable {
 		// ロードタイプ
@@ -24,7 +23,7 @@ namespace AssetBundleTools {
 		// ロードタイプ
 		protected LoadType _type;
 
-		protected AssetBundle _bundle = null;
+		protected UnityEngine.AssetBundle _bundle = null;
 		protected bool isUpdate = true;
 
 		// エラー
@@ -51,7 +50,7 @@ namespace AssetBundleTools {
 
 		// 都度チェック用メソッド、返却は、updateが更に必要かどうか
 		abstract public bool Update();
-		public AssetBundle GetAssetBundle() {
+		public UnityEngine.AssetBundle GetAssetBundle() {
 			return _bundle;
 		}
 

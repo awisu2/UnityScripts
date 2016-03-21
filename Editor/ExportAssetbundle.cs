@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using AssetBundleTools;
 
-namespace A2Unity.Editor {
+namespace AssetBundleTools {
 	public class ExportAssetbundle  
 	{
 		const string OutputFolder = "AssetBundles";
@@ -41,7 +42,12 @@ namespace A2Unity.Editor {
 			string name = GetPlatformNameByTarget (target);
 			string dir = Application.dataPath + "/../" + OutputFolder + "/" + name;
 
-			BuildAssetBundleOptions options = BuildAssetBundleOptions.None;
+			BuildAssetBundleOptions options = BuildAssetBundleOptions.None
+				| BuildAssetBundleOptions.DeterministicAssetBundle
+				| BuildAssetBundleOptions.DisableWriteTypeTree
+				//				| BuildAssetBundleOptions.AppendHashToAssetBundleName	
+				| BuildAssetBundleOptions.ChunkBasedCompression
+				;
 
 			// ディレクトリ作成
 			if(!Directory.Exists(dir)) {
@@ -49,6 +55,9 @@ namespace A2Unity.Editor {
 			}
 
 			BuildPipeline.BuildAssetBundles (dir, options, target);
+			Caching.CleanCache();
+
+			Debug.Log ("Export Complete. (" + dir + ")");
 		}
 
 		// platformからtargetを取得(targetを利用できるのはEditorのみなので変換できるように)
@@ -80,33 +89,9 @@ namespace A2Unity.Editor {
 		private static string GetPlatformNameByTarget(BuildTarget target)
 		{
 			RuntimePlatform platform = GetPlatformByTarget (target);
-			return GetPlatformName (platform);
+			return Util.GetPlatformName (platform);
 		}
 
-		// platformから名前を取得
-		private static string GetPlatformName(RuntimePlatform platform) 
-		{
-			string name = "";
 
-			switch (platform) {
-			case RuntimePlatform.IPhonePlayer:
-				{
-					name = "iOS";
-					break;
-				}
-			case RuntimePlatform.Android:
-				{
-					name = "Android";
-					break;
-				}
-			case RuntimePlatform.OSXPlayer:
-			default:
-				{
-					name = "OSX";
-					break;
-				}
-			}
-			return name;
-		}
 	}
 }

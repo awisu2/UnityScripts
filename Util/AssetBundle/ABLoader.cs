@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.Experimental.Networking;
-using System.Collections;
 using System.IO;
 using System;
 
 //TODO:デストラクタとdispose
-namespace A2Unity.Utility.AssetBundle {
-	// TODO: bundleInfoのほうがいいかも
-	abstract public class ABLoader : IDisposable {
+namespace org.a2dev.UnityScripts.Util.AssetBundle
+{
+    // TODO: bundleInfoのほうがいいかも
+    abstract public class ABLoader : IDisposable {
 		// ロードタイプ
 		public enum LoadType
 		{

@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using System.Collections;
 using System.IO;
 
-namespace A2Unity.Editor {
-	public static class ScriptableObjectUtility {
+namespace org.a2dev.UnityScript.Editor {
+	public static class ScriptableObjectUtil {
 		/// <summary>
 		/// ScriptableObjectの作成
 		/// </summary>

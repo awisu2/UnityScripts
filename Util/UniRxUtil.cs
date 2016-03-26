@@ -1,4 +1,7 @@
 ﻿#if ENABLE_UNIRX
+/// <summary>
+/// UniRx用Util
+/// </summary>
 using UnityEngine;
 using UnityEngine.UI;
 using UniRx;
@@ -6,23 +9,30 @@ using UniRx.Triggers;
 using System;
 using System.Collections.Generic;
 
-namespace A2Unity.Utility
+namespace org.a2dev.UnityScripts.Util
 {
-	public class UniRxUtility : MonoBehaviour{
+	public class UniRxUtil : MonoBehaviour {
 		// インスタンス
-		private static UniRxUtility instance = null;
+		private static UniRxUtil instance = null;
 
-		// インスタンス取得
-		public static UniRxUtility GetInstance()
+		// インスタンス化する際のオブジェクト名
+		const string NAME_GAMEOBJECT = "UniRxUtil";
+
+		/// <summary>
+		/// GameObjectName
+		/// </summary>
+		/// <returns>The instance.</returns>
+		/// <param name="name">Name.</param>
+		public static UniRxUtil GetInstance(string name = NAME_GAMEOBJECT)
 		{
 			if (instance != null) {
 				return instance;
 			}
 
 			// ゲームオブジェクト
-			GameObject go = new GameObject ("UniRxUtility");
-			go.AddComponent<UniRxUtility> ();
-			instance = go.GetComponent<UniRxUtility> ();
+			GameObject go = new GameObject ();
+			go.AddComponent<UniRxUtil> ();
+			instance = go.GetComponent<UniRxUtil> ();
 
 			return instance;
 		}
@@ -36,6 +46,7 @@ namespace A2Unity.Utility
 		/// <param name="actPush">ボタンが押されている間のAction</param>
 		public void SetButtonPushing(Button button, Action actDown = null, Action actUp = null, Action actPush = null)
 		{
+			// ボタン管理用のフラグ
 			ReactiveProperty<bool> flag = new ReactiveProperty<bool> (false);
 
 			// ボタンダウン
@@ -60,7 +71,11 @@ namespace A2Unity.Utility
 			this.UpdateAsObservable ()
 				.Select (_ => flag)
 				.Where (_ => _.Value)
-				.Subscribe (_ => actPush ());
+				.Subscribe (_ => {
+					if (actPush != null) {
+						actPush ();
+					}
+				});
 		}
 
 		/// <summary>
@@ -108,9 +123,10 @@ namespace A2Unity.Utility
 					, ex => {
 						if (actError != null) {
 							actError (ex.ToString ());
-						}
+                        }
 					}
-				);
+                );
+				
 		}
 
 		/// <summary>

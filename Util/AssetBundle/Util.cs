@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-namespace A2Unity.Utility.AssetBundle {
-	public class Util {
+namespace org.a2dev.UnityScripts.Util.AssetBundle
+{
+    public class Util {
 		// platformから名前を取得
 		public static string GetPlatformName(RuntimePlatform platform) 
 		{

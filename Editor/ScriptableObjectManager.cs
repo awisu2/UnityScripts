@@ -1,10 +1,13 @@
-﻿using UnityEngine;
+﻿/// <summary>
+/// ScriptableObject用Util
+/// </summary>
+using UnityEngine;
 using UnityEditor;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using org.a2dev.UnityScripts.Util;
 
-namespace A2Unity.Editor
+namespace org.a2dev.UnityScript.Editor
 {
 	public class ScriptableObjectManager : UnityEditor.Editor
 	{
@@ -15,7 +18,7 @@ namespace A2Unity.Editor
 		public static void LogResourcPathSelection()
 		{
 			// 選択しているAsset
-			List<string> paths = EditorUtility.GetSelectionAssetPaths();
+			List<string> paths = EditorUtil.GetSelectionAssetPaths();
 			foreach (string path in paths) {
 
 				// Resourcesディレクトリ取得

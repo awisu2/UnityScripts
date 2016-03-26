@@ -1,10 +1,11 @@
+/// <summary>
+/// ただのサンプルプロジェクト特に何をするわけでもなく
+/// </summary>
 using UnityEngine;
-using System.Collections;
-using UnityEditor;
 
-namespace A2Unity.Utility
+namespace org.a2dev.UnityScripts.Util
 {
-	public class Sample {
+    public class PlayerPresUtil {
 		private int GetNewVersion() {
 			int version = PlayerPrefs.GetInt ("version", -1);
 			PlayerPrefs.SetInt ("version", ++version);

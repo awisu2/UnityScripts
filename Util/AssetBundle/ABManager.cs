@@ -2,7 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace A2Unity.Utility.AssetBundle {
+namespace org.a2dev.UnityScripts.Util.AssetBundle
+{
 	public class ABManager : MonoBehaviour {
 		static Dictionary<string, ABLoader> loaders;
 		static Dictionary<string, UnityEngine.AssetBundle> bundles;
@@ -49,7 +50,7 @@ namespace A2Unity.Utility.AssetBundle {
 				bundles = new Dictionary<string, UnityEngine.AssetBundle> ();
 				errors = new Dictionary<string, string> ();
 				_host = host;
-				_platformName = Util.GetPlatformName (GetPlatformRunning());
+				_platformName =  Util.GetPlatformName (GetPlatformRunning());
 				#if DEBUG
 				DebugLog("[Initialize] host:" + _host);
 				#endif

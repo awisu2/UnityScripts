@@ -46,5 +46,20 @@ namespace org.a2dev.UnityScripts.Util
 
             return go;
         }
+        
+        /// <summary>
+        /// コンポーネントを取得、存在しなければ追加
+        /// </summary>
+        /// <returns>Component</returns>
+        /// <param name="gameObjcect">Componentを追加するComponent</param>
+        public static T GetComponentOrAdd<T> (GameObject gameObject) where T : Component
+        {
+            T component = gameObject.GetComponent<T>();
+            if(component == null)
+            {
+                component = gameObject.AddComponent<T>();
+            }
+            return component;
+        }
     }
 }

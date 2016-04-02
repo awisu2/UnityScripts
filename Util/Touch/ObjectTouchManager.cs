@@ -1,5 +1,5 @@
 ﻿/// <summary>
-/// TouchManager
+/// ObjectTouchManager
 /// </summary>
 using UnityEngine;
 using System;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace org.a2dev.UnityScripts.Util.Touch
 {
-    public class TouchManager : MonoBehaviour
+    public class ObjectTouchManager : MonoBehaviour
     {
         // クラス名
         const string CLASS_NAME = "TouchManager";
@@ -27,9 +27,9 @@ namespace org.a2dev.UnityScripts.Util.Touch
         /// </summary>
         /// <returns>ClickChecker</returns>
         /// <param name="name">GameObject名</param>
-        public static TouchManager Instantiate(string name = CLASS_NAME)
+        public static ObjectTouchManager Instantiate(string name = CLASS_NAME)
         {
-            return GameObjectUtil.GetComponentOrAddWithGameobjectSingleton<TouchManager>(name);
+            return GameObjectUtil.GetComponentOrAddWithGameobjectSingleton<ObjectTouchManager>(name);
         }
 
         /// <summary>
@@ -78,7 +78,6 @@ namespace org.a2dev.UnityScripts.Util.Touch
             // 判定対象がない場合は処理を行わない
             if (objects.Count > 0)
             {
-                // クリックの状態チェック
                 UpdateClickCheck();
             }
         }

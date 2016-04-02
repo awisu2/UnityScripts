@@ -25,7 +25,7 @@ namespace org.a2dev.UnityScripts.Compornents
         /// <param name="gameObject">トレース処理を設定するGameObject</param>
         public static void SetTapTracer(GameObject gameObject)
         {
-            TouchManager manager = TouchManager.Instantiate();
+            ObjectTouchManager manager = ObjectTouchManager.Instantiate();
             manager.AddEvent(gameObject, null, null, onPush);
         }
 

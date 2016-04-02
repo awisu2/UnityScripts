@@ -46,6 +46,22 @@ namespace org.a2dev.UnityScripts.Util
 
             return go;
         }
+
+        /// <summary>
+        /// GameObjectの存在確認をしたうえでの作成
+        /// </summary>
+        /// <returns>GameObject</returns>
+        /// <param name="name">GameObject名</param>
+        public static GameObject CreateGameobjectSingleton (string name)
+        {
+            GameObject go = GameObject.Find(name);
+            if(go == null)
+            {
+                go = new GameObject(name);
+            }
+            
+            return go;
+        }
         
         /// <summary>
         /// コンポーネントを取得、存在しなければ追加
@@ -60,6 +76,17 @@ namespace org.a2dev.UnityScripts.Util
                 component = gameObject.AddComponent<T>();
             }
             return component;
+        }
+        
+        /// <summary>
+        /// コンポーネントを取得、存在しなければ追加
+        /// </summary>
+        /// <returns>Component</returns>
+        /// <param name="gameObjcect">Componentを追加するComponent</param>
+        public static T GetComponentOrAddWithGameobjectSingleton<T> (string name) where T : Component
+        {
+            GameObject go = CreateGameobjectSingleton(name);
+            return GetComponentOrAdd<T>(go);
         }
     }
 }

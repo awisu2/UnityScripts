@@ -80,6 +80,10 @@ namespace org.a2dev.UnityScripts.Editor
             GUILayout.Label("ugui", EditorStyles.boldLabel);
             OnGUINormalizeCanvas();
             
+            // シーンリストメニュー
+            GUILayout.Label("Any Windows", EditorStyles.boldLabel);
+            OnGUISceanList();
+
             // PlayerSetting
             GUILayout.BeginHorizontal();
             isShowPlaySettings = EditorGUILayout.Foldout( isShowPlaySettings, "PlayerSetting" );
@@ -92,7 +96,8 @@ namespace org.a2dev.UnityScripts.Editor
             if ( isShowPlaySettings ) {
                 OnGUIStepPlayerSetting();
             }
-            
+
+            // スクロールビューEnd            
             GUILayout.EndScrollView();
         }
 
@@ -207,7 +212,7 @@ namespace org.a2dev.UnityScripts.Editor
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Bundle Identifier");
-            string identifier = GUILayout.TextArea(PlayerSettings.bundleIdentifier);
+            string identifier = GUILayout.TextField(PlayerSettings.bundleIdentifier);
             if(identifier != PlayerSettings.bundleIdentifier)
             {
                 PlayerSettings.bundleIdentifier = identifier;
@@ -303,7 +308,7 @@ namespace org.a2dev.UnityScripts.Editor
             {
                 define = defineAlone;
             }
-            string defineInput = GUILayout.TextArea(define);
+            string defineInput = GUILayout.TextField(define);
             if(defineInput != define)
             {
                 defineAlone = defineInput;
@@ -341,7 +346,7 @@ namespace org.a2dev.UnityScripts.Editor
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(labelName, GUILayout.Width(60f));
-            define = GUILayout.TextArea(define);
+            define = GUILayout.TextField(define);
             EditorGUI.BeginDisabledGroup(define == PlayerSettings.GetScriptingDefineSymbolsForGroup(group));
             if(GUILayout.Button("Set", GUILayout.Width(40f)))
             {
@@ -352,6 +357,15 @@ namespace org.a2dev.UnityScripts.Editor
             GUILayout.EndHorizontal();
             
             return define;
+        }
+        
+        // シーンリスト
+        void OnGUISceanList()
+        {
+            if(GUILayout.Button("Scenes List"))
+            {
+                SceneListWindow.OpenWindow();
+            }
         }
     }
 }

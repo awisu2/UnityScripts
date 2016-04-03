@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using org.a2dev.UnityScripts.Util;
+using org.a2dev.UnityScripts.GUIParts;
 
 namespace org.a2dev.UnityScripts.Editor
 {
@@ -69,7 +69,7 @@ namespace org.a2dev.UnityScripts.Editor
             InitOnceStatic();
             
             // 左にスペースを空ける
-            EditorUtil.LeftSpace(() =>
+            GUILayoutUtil.LeftSpace(() =>
             {
                 // bundleIdentifier設定
                 OnGUIStepPlayerSettingBundleIdentifier();

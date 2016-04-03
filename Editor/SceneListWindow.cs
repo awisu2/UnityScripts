@@ -3,7 +3,6 @@
 /// </summary>
 using UnityEngine;
 using UnityEditor;
-using org.a2dev.UnityScripts.Util;
 using System.Collections.Generic;
 
 namespace org.a2dev.UnityScripts.Editor

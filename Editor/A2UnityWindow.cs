@@ -41,7 +41,6 @@ namespace org.a2dev.UnityScripts.Editor
             EditorUtil.GetWindow<A2UnityWindow>(NAME_WINDOW).Show();
         }
 
-
         /// <summary>
         /// Window内表示
         /// </summary>

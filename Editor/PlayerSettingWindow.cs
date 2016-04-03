@@ -33,7 +33,6 @@ namespace org.a2dev.UnityScripts.Editor
         /// <summary>
         /// 
         /// </summary>
-        [MenuItem("Window/" + EditorUtil.NAME_EDITOR_PREFIX + "/a2devWindow")]
         static void OpenWindow()
         {
             EditorUtil.GetWindow<PlayerSettingWindow>(NAME_WINDOW).Show();

@@ -24,9 +24,6 @@ namespace org.a2dev.UnityScripts.Editor
         // 行間用の高さ
         const float SPACE_HEIGHT = 10f;
 
-        // 初期化フラグ
-        bool isInitialize = false;
-
         // playerSettingのトグル表示フラグ
         bool isShowPlaySettings = false;
 
@@ -35,7 +32,7 @@ namespace org.a2dev.UnityScripts.Editor
         /// <summary>
         /// 
         /// </summary>
-        [MenuItem("Window/" + EditorUtil.NAME_EDITOR_PREFIX + "/a2devWindow")]
+        [MenuItem(WINDOW_PREFIX + "a2devWindow")]
         static void OpenWindow()
         {
             BaseEditorWindow<A2UnityWindow>.OpenWindow();
@@ -44,27 +41,23 @@ namespace org.a2dev.UnityScripts.Editor
         /// <summary>
         /// Window内表示
         /// </summary>
-        void OnGUI()
+        protected override void OnGUI()
         {
-            if (!isInitialize)
-            {
-                Init();
-                isInitialize = true;
-            }
-
+            InitOnce();
+            
             // スクロールビュー
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
             // タイムスケール
-            GUILayout.Label("timescale　x" + Time.timeScale.ToString("0.00"), EditorStyles.boldLabel);
+            EditorUtil.Label("timescale　x" + Time.timeScale.ToString("0.00"), true);
             OnGUITimeScale();
 
             // キャンバスのノーマライズ化ボタン
-            GUILayout.Label("ugui", EditorStyles.boldLabel);
+            EditorUtil.Label("ugui", true);
             OnGUINormalizeCanvas();
 
             // シーンリストメニュー
-            GUILayout.Label("Any Windows", EditorStyles.boldLabel);
+            EditorUtil.Label("Any Windows", true);
             OnGUISceanList();
 
             // PlayerSetting
@@ -78,7 +71,7 @@ namespace org.a2dev.UnityScripts.Editor
 
             if (isShowPlaySettings)
             {
-                PlayerSettingWindow.OnGUI();
+                PlayerSettingWindow.OnGUIStatic();
             }
 
             // スクロールビューEnd            
@@ -86,15 +79,18 @@ namespace org.a2dev.UnityScripts.Editor
         }
 
         /// <summary>
-        /// 初期化処理
+        /// 初期化
         /// </summary>
-        void Init()
+        protected override void Init()
         {
+            Debug.Log("call " + className);
         }
 
         // stepボタン
         void OnGUIStep()
         {
+            InitOnce();
+
             if (GUILayout.Button("Step"))
             {
                 Debug.Log("step", this);
@@ -107,6 +103,8 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>
         void OnGUITimeScale()
         {
+            InitOnce();
+
             // メニュー以外でのTimeScale変更に合わせる
             int index = -1;
             for (int i = 0; i < timeScaleScales.Length; i++)
@@ -145,6 +143,8 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>        
         void OnGUINormalizeCanvas()
         {
+            InitOnce();
+            
             // ボタン表示
             if (GUILayout.Button("Create & NormalizeCanvas"))
             {
@@ -164,6 +164,8 @@ namespace org.a2dev.UnityScripts.Editor
         // シーンリスト
         void OnGUISceanList()
         {
+            InitOnce();
+            
             if (GUILayout.Button("Scenes List"))
             {
                 SceneListWindow.OpenWindow();

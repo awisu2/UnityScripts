@@ -28,12 +28,26 @@ namespace org.a2dev.UnityScripts.Editor
             "Portrait",
         };
 
-        static bool isInit = false;
-
         /// <summary>
         /// 初期化
         /// </summary>
-        public static void Init()
+        protected override void Init()
+        {
+            InitOnceStatic();
+        }
+
+        static bool isInitStatic = false;
+
+        protected static void InitOnceStatic()
+        {
+            if(isInitStatic == false)
+            {
+                InitStatic();
+                isInitStatic = true;
+            }
+        }
+
+        protected static void InitStatic()
         {
             // define値の取得
             defineAlone = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
@@ -42,44 +56,31 @@ namespace org.a2dev.UnityScripts.Editor
         }
 
         /// <summary>
-        /// 一度のみの初期化
-        /// </summary>
-        public static void InitOnce()
-        {
-            if (isInit == false)
-            {
-                Init();
-                isInit = true;
-            }
-        }
-
-        /// <summary>
         /// OnGUI
         /// </summary>
-        public static void OnGUI()
+        protected override void OnGUI()
         {
             InitOnce();
+            OnGUIStatic();
+        }
+        
+        public static void OnGUIStatic() 
+        {
+            InitOnceStatic();
+            
+            // 左にスペースを空ける
+            EditorUtil.LeftSpace(() =>
+            {
+                // bundleIdentifier設定
+                OnGUIStepPlayerSettingBundleIdentifier();
 
-            GUILayout.BeginHorizontal();
+                // orientation設定
+                GUILayout.Label("Orientation");
+                OnGUIStepPlayerSettingOrientation();
 
-            GUILayout.BeginVertical(GUILayout.Width(5f));
-            GUILayout.Space(1f);
-            GUILayout.EndVertical();
-
-            GUILayout.BeginVertical();
-
-            // bundleIdentifier設定
-            OnGUIStepPlayerSettingBundleIdentifier();
-
-            // orientation設定
-            GUILayout.Label("Orientation");
-            OnGUIStepPlayerSettingOrientation();
-
-            GUILayout.Label("Defines Symbols");
-            OnGUIStepPlayerSettingDefineSymbols();
-            GUILayout.EndVertical();
-
-            GUILayout.EndHorizontal();
+                GUILayout.Label("Defines Symbols");
+                OnGUIStepPlayerSettingDefineSymbols();
+            });
         }
 
         /// <summary>
@@ -87,8 +88,6 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>
         public static void OnGUIStepPlayerSettingBundleIdentifier()
         {
-            InitOnce();
-
             GUILayout.BeginHorizontal();
             GUILayout.Label("Bundle Identifier", GUILayout.Width(90f));
 
@@ -116,8 +115,6 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>
         public static void OnGUIStepPlayerSettingOrientation()
         {
-            InitOnce();
-
             // Default Orientation
             orientationIndex = OrientationUtil.GetUIOrientationIndex(PlayerSettings.defaultInterfaceOrientation);
             orientationIndex = EditorGUILayout.Popup(orientationIndex, OrientationUtil.OrientationStrings);
@@ -196,8 +193,6 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>
         public static void OnGUIStepPlayerSettingDefineSymbols()
         {
-            InitOnce();
-
             defineAlone = OnGUIDefinesSymbols(BuildTargetGroup.Standalone, "Alone", defineAlone);
             defineIos = OnGUIDefinesSymbols(BuildTargetGroup.iOS, "iOS", defineIos);
             defineAndroid = OnGUIDefinesSymbols(BuildTargetGroup.Android, "Android", defineAndroid);
@@ -248,8 +243,6 @@ namespace org.a2dev.UnityScripts.Editor
         // 各define値の更新用テキスト表示
         static string OnGUIDefinesSymbols(BuildTargetGroup group, string labelName, string define)
         {
-            InitOnce();
-
             GUILayout.BeginHorizontal();
             GUILayout.Label(labelName, GUILayout.Width(60f));
             define = GUILayout.TextField(define);

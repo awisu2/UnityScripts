@@ -37,7 +37,7 @@ namespace org.a2dev.UnityScripts.Editor
         /// <summary>
         /// ウィンドウを開く
         /// </summary>        
-        [MenuItem("Window/" + EditorUtil.NAME_EDITOR_PREFIX + "/SceneList")]
+        [MenuItem(WINDOW_PREFIX + "SceneList")]
         public static void OpenWindow()
         {
             BaseEditorWindow<SceneListWindow>.OpenWindow();
@@ -46,14 +46,9 @@ namespace org.a2dev.UnityScripts.Editor
         /// <summary>
         /// OnGUI
         /// </summary>        
-        void OnGUI()
+        protected override void OnGUI()
         {
-            if (isInitialize == false)
-            {
-                Init();
-
-                isInitialize = true;
-            }
+            InitOnce();
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
@@ -63,7 +58,7 @@ namespace org.a2dev.UnityScripts.Editor
             GUILayout.EndScrollView();
         }
 
-        void Init()
+        protected override void Init()
         {
             // ビルド設定のシーン一覧を取得
             buildScenes = EditorBuildSettings.scenes;

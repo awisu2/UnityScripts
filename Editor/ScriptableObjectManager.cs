@@ -3,7 +3,6 @@
 /// </summary>
 using UnityEngine;
 using UnityEditor;
-using System.Collections.Generic;
 using System.IO;
 using org.a2dev.UnityScripts.Util;
 
@@ -18,11 +17,12 @@ namespace org.a2dev.UnityScript.Editor
 		public static void LogResourcPathSelection()
 		{
 			// 選択しているAsset
-			List<string> paths = EditorUtil.GetSelectionAssetPaths();
-			foreach (string path in paths) {
-
+			string[] paths = EditorUtil.GetSelectionAssetPaths();
+            for(int i = 0; i < paths.Length; i++)
+            {
 				// Resourcesディレクトリ取得
-				string pathResource = ConvertResourcesPath (path);
+				string pathResource = ConvertResourcesPath (paths[i]);
+                
 				if (string.IsNullOrEmpty (pathResource)) {
 					continue;
 				}

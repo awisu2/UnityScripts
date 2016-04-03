@@ -8,9 +8,6 @@ public abstract class BaseEditorWindow<T> : EditorWindow where T : EditorWindow
     // クラス名
     public static string className = typeof(T).Name;
 
-    // 初期化フラグ
-    protected bool isInit = false;
-
     /// <summary>
     /// ウィンドウを開く
     /// </summary>
@@ -24,23 +21,6 @@ public abstract class BaseEditorWindow<T> : EditorWindow where T : EditorWindow
             title = className;
         }
         return EditorWindow.GetWindow(typeof(T), isUtil, title) as T;
-    }
-
-    /// <summary>
-    /// 初期化
-    /// </summary>    
-    protected abstract void Init();
-
-    /// <summary>
-    /// 1度のみの初期化
-    /// </summary>
-    protected void InitOnce()
-    {
-        if(isInit == false)
-        {
-            Init();
-            isInit = true;
-        }
     }
     
     /// <summary>

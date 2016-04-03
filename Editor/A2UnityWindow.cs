@@ -36,8 +36,6 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>
         protected override void OnGUI()
         {
-            InitOnce();
-
             // スクロールビュー
             scrollPosition = GUILayoutUtil.ScrollView(scrollPosition, () =>
             {
@@ -72,14 +70,6 @@ namespace org.a2dev.UnityScripts.Editor
                     PlayerSettingWindow.OnGUIStatic();
                 }
             });
-        }
-
-        /// <summary>
-        /// 初期化
-        /// </summary>
-        protected override void Init()
-        {
-            Debug.Log("call " + className);
         }
     }
 }

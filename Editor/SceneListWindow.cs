@@ -18,6 +18,8 @@ namespace org.a2dev.UnityScripts.Editor
 
         EditorBuildSettingsScene[] buildScenes;
 
+        bool isInit = false;
+
         // シーン情報
         public class SceneInfo
         {
@@ -57,7 +59,16 @@ namespace org.a2dev.UnityScripts.Editor
             GUILayout.EndScrollView();
         }
 
-        protected override void Init()
+        void InitOnce()
+        {
+            if (isInit == false)
+            {
+                Init();
+                isInit = true;
+            }
+        }
+
+        void Init()
         {
             // ビルド設定のシーン一覧を取得
             buildScenes = EditorBuildSettings.scenes;

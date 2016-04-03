@@ -28,14 +28,6 @@ namespace org.a2dev.UnityScripts.Editor
             "Portrait",
         };
 
-        /// <summary>
-        /// 初期化
-        /// </summary>
-        protected override void Init()
-        {
-            InitOnceStatic();
-        }
-
         static bool isInitStatic = false;
 
         protected static void InitOnceStatic()
@@ -60,7 +52,7 @@ namespace org.a2dev.UnityScripts.Editor
         /// </summary>
         protected override void OnGUI()
         {
-            InitOnce();
+            InitOnceStatic();
             OnGUIStatic();
         }
         

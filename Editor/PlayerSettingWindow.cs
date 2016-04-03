@@ -4,7 +4,7 @@ using org.a2dev.UnityScripts.Util;
 
 namespace org.a2dev.UnityScripts.Editor
 {
-    public class PlayerSettingWindow : EditorWindow
+    public class PlayerSettingWindow : BaseEditorWindow<PlayerSettingWindow>
     {
         // window用の名称(クラス名から)
         const string NAME_WINDOW = "PlayerSetting";
@@ -29,14 +29,6 @@ namespace org.a2dev.UnityScripts.Editor
         };
 
         static bool isInit = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        static void OpenWindow()
-        {
-            EditorUtil.GetWindow<PlayerSettingWindow>(NAME_WINDOW).Show();
-        }
 
         /// <summary>
         /// 初期化

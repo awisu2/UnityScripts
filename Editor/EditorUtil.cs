@@ -35,17 +35,5 @@ namespace org.a2dev.UnityScripts.Util
 
             return paths;
         }
-
-        /// <summary>
-        /// Editorウィンドウ作成
-        /// </summary>
-        /// <returns>作成したwindow</returns>
-        /// <param name="title">windowのタイトル</param>
-        /// <param name="isUtil">windowをUtilとして扱うフラグ。trueにするとタブがなくなる</param>
-        public static T GetWindow<T>(string title, bool isUtil = false) where T : EditorWindow
-        {
-            T window = EditorWindow.GetWindow(typeof(T), isUtil, title) as T;
-            return window;
-        }
     }
 }

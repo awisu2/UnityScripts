@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace org.a2dev.UnityScripts.Editor
 {
-    public class SceneListWindow : EditorWindow
+    public class SceneListWindow : BaseEditorWindow<SceneListWindow>
     {
         const string NAME_WINDOW = "SceneList";
         Vector2 scrollPosition = Vector2.zero;
@@ -40,7 +40,7 @@ namespace org.a2dev.UnityScripts.Editor
         [MenuItem("Window/" + EditorUtil.NAME_EDITOR_PREFIX + "/SceneList")]
         public static void OpenWindow()
         {
-            EditorUtil.GetWindow<SceneListWindow>(NAME_WINDOW).Show();
+            BaseEditorWindow<SceneListWindow>.OpenWindow();
         }
 
         /// <summary>

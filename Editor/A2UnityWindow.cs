@@ -8,7 +8,7 @@ using org.a2dev.UnityScripts.Util;
 
 namespace org.a2dev.UnityScripts.Editor
 {
-    public class A2UnityWindow : EditorWindow
+    public class A2UnityWindow : BaseEditorWindow<A2UnityWindow>
     {
         public const string NAME_WINDOW = "a2dev";
 
@@ -38,7 +38,7 @@ namespace org.a2dev.UnityScripts.Editor
         [MenuItem("Window/" + EditorUtil.NAME_EDITOR_PREFIX + "/a2devWindow")]
         static void OpenWindow()
         {
-            EditorUtil.GetWindow<A2UnityWindow>(NAME_WINDOW).Show();
+            BaseEditorWindow<A2UnityWindow>.OpenWindow();
         }
 
         /// <summary>
@@ -160,8 +160,6 @@ namespace org.a2dev.UnityScripts.Editor
                 ScreenUtil.setCanvasScaler(scaler, ScreenUtil.SCREENSIZE_IPHONE5_LANDSCAPE, false);
             }
         }
-
-
 
         // シーンリスト
         void OnGUISceanList()

@@ -187,5 +187,48 @@ namespace org.a2dev.UnityScripts.Editor
 			
 			return transition;
 		}
+        
+        // イベントの作成
+        public AnimationEvent CreateAnimationEvent(string name, float time = 0f)
+        {
+            var evt = new AnimationEvent();
+            evt.functionName = name;
+            evt.time = time;
+            return evt;
+        }
+        
+        // イベントの作成
+        public AnimationEvent CreateAnimationEvent(string name, int param, float time)
+        {
+            var evt = CreateAnimationEvent(name, time);
+            evt.intParameter = param;
+            return evt;
+        }
+        
+        // イベントの作成
+        public AnimationEvent CreateAnimationEvent(string name, string param, float time)
+        {
+            var evt = CreateAnimationEvent(name, time);
+            evt.stringParameter = param;
+            return evt;
+        }
+
+        // イベントの作成
+        public AnimationEvent CreateAnimationEvent(string name, float param, float time)
+        {
+            var evt = CreateAnimationEvent(name, time);
+            evt.floatParameter = param;
+            return evt;
+        }
+
+        // イベントの作成
+        public AnimationEvent CreateAnimationEvent(string name, Object param, float time)
+        {
+            var evt = CreateAnimationEvent(name, time);
+            evt.objectReferenceParameter = param;
+            return evt;
+        }
+
+
     }
 }

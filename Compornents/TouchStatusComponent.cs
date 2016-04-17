@@ -9,11 +9,19 @@ namespace org.a2dev.UnityScripts.Compornents
     public class TouchStatusComponent : MonoBehaviour
     {
         // 各種タップステータス
-        #if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
+#if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
         TouchStatus[] statuses = new TouchStatus[5];
-        #else
+#else
         TouchStatus[] statuses = new TouchStatus[1];
-        #endif
+#endif
+
+        public delegate void OnDownHandler(TouchStatus[] position);
+        public delegate void OnUpHandler(TouchStatus[] position);
+        public delegate void OnPushHandler(TouchStatus[] position);
+
+        public event OnDownHandler OnDown;
+        public event OnUpHandler OnUp;
+        public event OnPushHandler OnPush;
 
         /// <summary>
         /// Awake
@@ -28,7 +36,7 @@ namespace org.a2dev.UnityScripts.Compornents
         /// </summary>
         void Init()
         {
-            for(int i = 0; i < statuses.Length; i++)
+            for (int i = 0; i < statuses.Length; i++)
             {
                 statuses[i] = new TouchStatus();
             }
@@ -39,7 +47,7 @@ namespace org.a2dev.UnityScripts.Compornents
         /// </summary>
         void Update()
         {
-            #if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
+#if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
             for(int i = 0; i < Input.touchCount; i++)
             {
                 TouchPhase phase = Input.GetTouch(i).phase;
@@ -61,14 +69,10 @@ namespace org.a2dev.UnityScripts.Compornents
                     }
                 }
             }            
-            #else
-            if(statuses[0].push)
+#else
+            if (statuses[0].push)
             {
                 statuses[0].down = false;
-                if (Input.GetMouseButtonUp(0))
-                {
-                    statuses[0].SetUp();
-                }
             }
             else
             {
@@ -76,9 +80,26 @@ namespace org.a2dev.UnityScripts.Compornents
                 if (Input.GetMouseButtonDown(0))
                 {
                     statuses[0].SetDown();
+                    if (OnDown != null)
+                        OnDown(statuses);
                 }
             }
-            #endif
+            
+            if (statuses[0].push)
+            {
+                if (Input.GetMouseButtonUp(0))
+                {
+                    statuses[0].SetUp();
+                    if (OnUp != null)
+                        OnUp(statuses);
+                }
+                else
+                {
+                    if(OnPush != null)
+                        OnPush(statuses);
+                }
+            }
+#endif
         }
 
         /// <summary>
@@ -94,28 +115,28 @@ namespace org.a2dev.UnityScripts.Compornents
         public string ToStringStatus()
         {
             string str = "";
-            for(int i = 0; i < statuses.Length; i++)
+            for (int i = 0; i < statuses.Length; i++)
             {
                 string s = "";
-                if(statuses[i].non)
+                if (statuses[i].non)
                 {
                     s += "non,";
                 }
-                if(statuses[i].down)
+                if (statuses[i].down)
                 {
                     s += "down,";
                 }
-                if(statuses[i].push)
+                if (statuses[i].push)
                 {
                     s += "push,";
                 }
-                if(statuses[i].up)
+                if (statuses[i].up)
                 {
                     s += "up,";
                 }
 
                 // 
-                if(string.IsNullOrEmpty(s) == false)
+                if (string.IsNullOrEmpty(s) == false)
                 {
                     str += i.ToString() + " : " + s.Substring(0, s.Length - 1) + "; ";
                 }
@@ -127,16 +148,16 @@ namespace org.a2dev.UnityScripts.Compornents
 
 public class TouchStatus
 {
-    public bool non{ get; private set; }
+    public bool non { get; private set; }
     public bool down { get; set; }
     public bool push { get; private set; }
     public bool up { get; set; }
-    
+
     public TouchStatus()
     {
         SetNon();
     }
-    
+
     public void SetNon()
     {
         non = true;
